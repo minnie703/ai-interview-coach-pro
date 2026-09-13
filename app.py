@@ -1,5 +1,11 @@
 from flask import Flask, render_template, request
-import ollama
+import google.generativeai as genai
+
+# Gemini API Key
+genai.configure(api_key="")
+
+# Load Gemini Model
+model = genai.GenerativeModel("models/gemini-flash-latest")
 
 app = Flask(__name__)
 
@@ -25,14 +31,9 @@ def interview():
         Return only the question.
         """
 
-        response = ollama.chat(
-            model="llama3.2",
-            messages=[
-                {"role": "user", "content": prompt}
-            ]
-        )
+        response = model.generate_content(prompt)
 
-        question = response["message"]["content"]
+        question = response.text
 
         return render_template(
             "index.html",
@@ -41,36 +42,32 @@ def interview():
         )
 
     # Evaluate Answer
+
     prompt = f"""
-You are a senior interview coach.
+    You are a senior interview coach.
 
-Job Role:
-{role}
+    Job Role:
+    {role}
 
-Interview Question:
-{request.form['question']}
+    Interview Question:
+    {request.form['question']}
 
-Candidate Answer:
-{answer}
+    Candidate Answer:
+    {answer}
 
-Evaluate the answer and provide:
+    Evaluate the answer and provide:
 
-1. Score out of 10
-2. Strengths
-3. Weaknesses
-4. Improved Answer Example
+    1. Score out of 10
+    2. Strengths
+    3. Weaknesses
+    4. Improved Answer Example
 
-Keep the feedback professional and easy to understand.
-"""
+    Keep the feedback professional and easy to understand.
+    """
 
-    response = ollama.chat(
-        model="llama3.2",
-        messages=[
-            {"role": "user", "content": prompt}
-        ]
-    )
+    response = model.generate_content(prompt)
 
-    feedback = response["message"]["content"]
+    feedback = response.text
 
     return render_template(
         "index.html",
@@ -82,4 +79,4 @@ Keep the feedback professional and easy to understand.
 
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000)
+    app.run(host="0.0.0.0", port=5000, debug=True)
